@@ -1,4 +1,5 @@
 package com.example.herocomics.enumerations;
 
-public enum role {
+public enum Role {
+    LEADER, COEQUIPIER, SUPPORT
 }
