@@ -38,20 +38,29 @@ public class MissionController {
      *
      * @param missionId L'ID de la mission pour laquelle on veut récupérer les participants.
      * @return Une liste de DTO contenant les informations des participants.
+     * Exemple de requête :
+     * GET <a href="http://localhost:8081/missions/1/equipe">http://localhost:8081/missions/1/equipe</a>
      */
     @GetMapping("missions/{missionId}/equipe")
     public List<ParticiperDto> getParticipants(@PathVariable Integer missionId) {
         return participerRepository.findByMissionId(missionId).stream()
-                .map(p -> new ParticiperDto(
-                        p.getID(),
-                        p.getSuperHeroEntity().getNomHero(),
-                        p.getMission().getNomMission(),
-                        p.getRole(),
-                        p.getStatus(),
-                        p.getSuperHeroEntity().getID(),
-                        p.getMission().getID(
-                ))
-                ).collect(Collectors.toList());
+                .map(p -> {
+                    try {
+                        return new ParticiperDto(
+                                p.getID(),
+                                p.getSuperHeroEntity().getNomHero(),
+                                p.getMission().getNomMission(),
+                                p.getRole() != null ? p.getRole().name() : null,
+                                p.getStatus() != null ? p.getStatus().name() : null,
+                                p.getSuperHeroEntity().getID(),
+                                p.getMission().getID()
+                        );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw e;
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -60,6 +69,15 @@ public class MissionController {
      * @param idMission L'ID de la mission à laquelle le super-héros doit être assigné.
      * @param dto       Le DTO contenant les informations du super-héros et son rôle dans la mission.
      * @return Une réponse indiquant si l'assignation a réussi ou échoué.
+     * Exemple de requête :
+     * POST <a href="http://localhost:8081/missions/1/assigner-hero">http://localhost:8081/missions/1/assigner-hero</a>
+     * avec le corps de la requête :
+     * ```json
+     * {
+     *   "superHeroId": 1,
+     *   "role": "LEADER",
+     *   "status": "ACTIF"
+     * }
      */
     @PostMapping("missions/{idMission}/assigner-hero")
     public ResponseEntity<String> assignerHero(
@@ -88,35 +106,34 @@ public class MissionController {
         MissionEntity mission = missionRepository.findById(idMission)
                 .orElseThrow(() -> new RuntimeException("Mission non trouvée avec l'ID: " + idMission));
 
+        // Si le role ou le statut n'est pas fourni, ou qu'il n'est pas valide, on lève une exception
+        if (dto.getRole() == null || dto.getStatus() == null) {
+            throw new IllegalArgumentException("Le rôle et le statut sont requis.");
+        }
+        if (!com.example.herocomics.enumerations.Role.isValidRole(dto.getRole())) {
+            throw new IllegalArgumentException("Rôle invalide: " + dto.getRole());
+        }
+        if (!com.example.herocomics.enumerations.Status.isValidStatus(dto.getStatus())) {
+            throw new IllegalArgumentException("Status invalide: " + dto.getStatus());
+        }
+
         // Création de l'entité de participation
         ParticiperEntity participation = new ParticiperEntity();
         participation.setMission(mission);
         participation.setSuperHeroEntity(hero);
-        participation.setRole(dto.getRole());
-        participation.setStatus(dto.getStatus());
-
+        participation.setRole(com.example.herocomics.enumerations.Role.valueOf(dto.getRole()));
+        participation.setStatus(com.example.herocomics.enumerations.Status.valueOf(dto.getStatus().toUpperCase()));
         participerRepository.save(participation);
 
         return ResponseEntity.ok("Super-héros assigné à la mission avec succès.");
     }
 
     /**
-     * Récupère les missions actives pour un super-héros spécifique.
-     *
-     * @param idHero L'ID du super-héros pour lequel on veut récupérer les missions actives.
-     * @return Une liste de missions actives pour le super-héros spécifié.
-     */
-    @GetMapping("/superheros/{idHero}/missions-actuelles")
-    public List<MissionEntity> getMissionsActivesPourHero(@PathVariable Integer idHero) {
-        return participerRepository.findBySuperHeroIdAndStatus(idHero, "Actif").stream()
-                .map(ParticiperEntity::getMission)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * Récupère les missions avec un niveau de menace élevé et un statut actif.
      *
      * @return Une liste de missions avec un niveau de menace élevé et un statut actif.
+     * Exemple de requête :
+     * GET <a href="http://localhost:8081/missions/danger-eleve">http://localhost:8081/missions/danger-eleve</a>
      */
     @GetMapping("/missions/danger-eleve")
     public List<MissionEntity> getMissionsDangerEleve() {
@@ -128,6 +145,8 @@ public class MissionController {
      *
      * @param minHeroes Le nombre minimum de super-héros.
      * @return Une liste de missions avec moins de super-héros que le seuil spécifié.
+     * Exemple de requête :
+     * GET <a href="http://localhost:8081/missions/heros-requis?minHeroes=3">http://localhost:8081/missions/heros-requis?minHeroes=3</a>
      */
     @GetMapping("/missions/heros-requis")
     public ResponseEntity<List<MissionEntity>> getMissionsWithLessThanMinHeroes(@RequestParam("minHeroes") int minHeroes) {
@@ -140,6 +159,8 @@ public class MissionController {
      *
      * @param limit Le nombre maximum de missions à retourner.
      * @return Une liste des missions les plus longues.
+     * Exemple de requête :
+     * GET <a href="http://localhost:8081/missions/les-plus-longues?limit=5">http://localhost:8081/missions/les-plus-longues?limit=5</a>
      */
     @GetMapping("/missions/les-plus-longues")
     public ResponseEntity<List<MissionEntity>> getLongestMissions(@RequestParam("limit") int limit) {
@@ -153,6 +174,8 @@ public class MissionController {
      * @param dateDebut La date de début de la période.
      * @param dateFin   La date de fin de la période.
      * @return Une liste de missions qui se chevauchent avec la période spécifiée.
+     * Exemple de requête :
+     * GET <a href="http://localhost:8081/missions/periode?date_debut=2023-01-01&date_fin=2023-12-31">http://localhost:8081/missions/periode?date_debut=2023-01-01&date_fin=2023-12-31</a>
      */
     @GetMapping("/missions/periode")
     public ResponseEntity<List<com.example.herocomics.dtos.MissionPeriodeDto>> getMissionsByPeriode(
@@ -164,12 +187,12 @@ public class MissionController {
             long nbSuperheros = m.getParticipations().size(); // ou requête COUNT si besoin
             String statut;
             LocalDate now = LocalDate.now();
-            if (now.isBefore(m.getDateDebut().atStartOfDay().toLocalDate())) {
-                statut = "À Venir";
-            } else if (now.isAfter(m.getDateFin().atStartOfDay().toLocalDate())) {
-                statut = "Terminée";
+            if (m.getDateFin() != null && m.getDateFin().isBefore(now)) {
+                statut = "TERMINEE";
+            } else if (m.getDateDebut() != null && m.getDateDebut().isAfter(now)) {
+                statut = "A VENIR";
             } else {
-                statut = "En Cours";
+                statut = "EN COURS";
             }
             long duree = ChronoUnit.DAYS.between(m.getDateDebut().atStartOfDay().toLocalDate(), m.getDateFin().atStartOfDay().toLocalDate());
             return new com.example.herocomics.dtos.MissionPeriodeDto(
@@ -177,7 +200,7 @@ public class MissionController {
                     nbSuperheros,
                     statut,
                     duree,
-                    m.getNiveauMenace()
+                    m.getNiveauMenace().name()
             );
         }).collect(Collectors.toList());
 
@@ -185,20 +208,18 @@ public class MissionController {
     }
 
     /**
-     * Récupère le rapport de performance d'un super-héros spécifique.
+     * Récupère le rapport d'activité mensuel pour un super-héros.
      *
-     * @param idHero L'ID du super-héros pour lequel on veut récupérer le rapport de performance.
-     * @return Un DTO contenant les statistiques de performance du super-héros.
+     * @param annee L'année pour laquelle on veut récupérer le rapport d'activité.
+     * @param mois  Le mois pour lequel on veut récupérer le rapport d'activité.
+     * @return Une liste de DTO contenant les rapports d'activité mensuels.
      */
-    @GetMapping("/superheros/rapport-performance/{idHero}")
-    public ResponseEntity<com.example.herocomics.dtos.RapportPerformanceDto> getRapportPerformance(@PathVariable int idHero) {
-        long terminees = participerRepository.countMissionsTerminees(idHero);
-        long leader = participerRepository.countMissionsLeader(idHero);
-        long total = participerRepository.countMissionsActifOuCompletee(idHero);
-        double tauxSucces = total > 0 ? (double) terminees / total : 0.0;
-
-        com.example.herocomics.dtos.RapportPerformanceDto rapport = new com.example.herocomics.dtos.RapportPerformanceDto(terminees, leader, tauxSucces);
-        return ResponseEntity.ok(rapport);
-    }
-
+//    @GetMapping("/stats/rapport-activite-mensuel")
+//    public ResponseEntity<List<RapportActiviteMensuelDto>> getRapportActiviteMensuel(
+//            @RequestParam("annee") int annee,
+//            @RequestParam("mois") int mois) {
+//
+//        List<RapportActiviteMensuelDto> rapports = participerRepository.findRapportActiviteMensuel(annee, mois);
+//        return ResponseEntity.ok(rapports);
+//    }
 }

@@ -27,13 +27,18 @@ public class MissionEntity {
     private String description;
 
     @Column(name = "niveau_menace")
-    private String niveauMenace;
+    @Enumerated(EnumType.STRING)
+    private NiveauMenace niveauMenace;
 
-    public String getNiveauMenace() {
+    public enum NiveauMenace {
+        FAIBLE, MOYENNE, ELEVEE
+    }
+
+    public NiveauMenace getNiveauMenace() {
         return niveauMenace;
     }
 
-    public void setNiveauMenace(String niveauMenace) {
+    public void setNiveauMenace(NiveauMenace niveauMenace) {
         this.niveauMenace = niveauMenace;
     }
 

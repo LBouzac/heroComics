@@ -12,7 +12,7 @@ public interface IMissionRepository extends JpaRepository<MissionEntity, Integer
      * Requête pour récupérer les missions avec un niveau de menace elevé et qui sont en cours.
      * @return
      */
-    @Query("SELECT m FROM MissionEntity m, ParticiperEntity p WHERE p.mission.ID = m.ID AND m.niveauMenace = 'Élevée' AND p.status = 'Actif'")
+    @Query("SELECT m FROM MissionEntity m, ParticiperEntity p WHERE p.mission.ID = m.ID AND m.niveauMenace = 'ELEVEE' AND p.status = 'ACTIF'")
     List<MissionEntity> findHighThreatMissionsInProgress();
 
     /**
@@ -43,12 +43,8 @@ public interface IMissionRepository extends JpaRepository<MissionEntity, Integer
      * @param dateDebut La date de début de la période.
      * @param dateFin La date de fin de la période.
      * @return
-     */    /**
-     * Requête pour récupérer les missions qui se chevauchent avec une période donnée.
-     * @param dateDebut La date de début de la période.
-     * @param dateFin La date de fin de la période.
-     * @return
      */
     @Query("SELECT m FROM MissionEntity m WHERE m.dateDebut >= :dateDebut AND m.dateFin <= :dateFin")
     List<MissionEntity> findMissionsByPeriode(@Param("dateDebut") java.time.LocalDate dateDebut, @Param("dateFin") java.time.LocalDate dateFin);
+
 }

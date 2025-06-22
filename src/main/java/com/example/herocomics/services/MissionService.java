@@ -26,7 +26,7 @@ public class MissionService implements IMissionService {
         MissionEntity entity = new MissionEntity();
         entity.setNomMission(nom_mission);
         entity.setDescription(description);
-        entity.setNiveauMenace(niveau_menace);
+        entity.setNiveauMenace(MissionEntity.NiveauMenace.valueOf(niveau_menace));
         entity.setDateDebut(date_debut);
         entity.setDateFin(date_fin);
 

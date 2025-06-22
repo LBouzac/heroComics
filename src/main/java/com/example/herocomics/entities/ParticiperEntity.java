@@ -1,5 +1,7 @@
 package com.example.herocomics.entities;
 
+import com.example.herocomics.enumerations.Role;
+import com.example.herocomics.enumerations.Status;
 import jakarta.persistence.*;
 
 @Entity
@@ -20,10 +22,12 @@ public class ParticiperEntity {
     private MissionEntity mission;
 
     @Column(name = "role")
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     public SuperHeroEntity getSuperHeroEntity() {
         return superHeroEntity;
@@ -41,19 +45,19 @@ public class ParticiperEntity {
         this.mission = mission;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
