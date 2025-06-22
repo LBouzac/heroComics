@@ -206,20 +206,4 @@ public class MissionController {
 
         return ResponseEntity.ok(result);
     }
-
-    /**
-     * Récupère le rapport d'activité mensuel pour un super-héros.
-     *
-     * @param annee L'année pour laquelle on veut récupérer le rapport d'activité.
-     * @param mois  Le mois pour lequel on veut récupérer le rapport d'activité.
-     * @return Une liste de DTO contenant les rapports d'activité mensuels.
-     */
-//    @GetMapping("/stats/rapport-activite-mensuel")
-//    public ResponseEntity<List<RapportActiviteMensuelDto>> getRapportActiviteMensuel(
-//            @RequestParam("annee") int annee,
-//            @RequestParam("mois") int mois) {
-//
-//        List<RapportActiviteMensuelDto> rapports = participerRepository.findRapportActiviteMensuel(annee, mois);
-//        return ResponseEntity.ok(rapports);
-//    }
 }
